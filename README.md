@@ -1,6 +1,6 @@
-#Oppsett av loggeplattform
+# Oppsett av loggeplattform
 
-##Oppsett av Colombus V-800 GPS
+## Oppsett av Colombus V-800 GPS
 Columbus GPS V-800 er benyttet, denne fungerer ut av boksen mot Raspberry Pi 3.  Den dukker opp på /dev/ttyACM0 eller /dev/ttyUSB0. For å sørge for at den alltid gjennkjennes og får en unik "fil" i /dev brukes en udev regel. Dette gjøres ved å legge til noen linjer i følgende fil: /etc/udev/rules.d/10-local.rules
 
 SUBSYSTEM=="tty", ATTRS{idVendor}=="0e8d", ATTRS{idProduct}=="3329", SYMLINK+="ttyGPS"
