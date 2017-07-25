@@ -9,6 +9,15 @@ Infoen som tregns på idVendor og idProduct finnes ved hjelp av: sudo lsusb -v |
 
 Columbus GPSen kan også sette opp til å logge på 5Hz, men for å få dette til må det sendes en tekst streng til GPSen. Dette kan gjøres via et enkelt python skript: configure_gps.py Det er ikke mulig å kjøre dette skriptet når gpsd kjører. Enten må skriptet kjøres før gpsd starte eller så må gpsd stoppes og startes etter at scriptet er kjørt.
 
+I logge appen er dette løst ved å legge til følgende linjer på slutten av /etc/rc.local:
+`
+# Her tomas sine oppstarts program
+python /home/pi/telemetri/configure_gps.py
+/etc/init.d/gpsd start
+#python /home/pi/telemetri/logg.py
+(sleep 30; python /home/pi/telemetri/logg.py)&
+`
+
 ### Vedlagte filer
 * logg.py: dette er filen som logger data fra akselerometer og skriver til disk. I tillegg skrives verdier ut til et NOKIA display.
 * configure_gps.py: dette er et script som setter GPSen i 5Hz modus.
