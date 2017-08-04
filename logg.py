@@ -1,29 +1,3 @@
-"""
-Copyright 2017 tomas.levin@vegvesen.no
-
-Redistribution and use in source and binary forms, with or without modification,
-are permitted provided that the following conditions are met:
-
-1. Redistributions of source code must retain the above copyright notice,
-    this list of conditions and the following disclaimer.
-
-2. Redistributions in binary form must reproduce the above copyright notice,
-    this list of conditions and the following disclaimer in the documentation
-    and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-POSSIBILITY OF SUCH DAMAGE.
-"""
-
 import logging
 import sys
 from datetime import datetime
@@ -34,43 +8,7 @@ import time
 import threading
 from Adafruit_BNO055 import BNO055
 
-#### Her kommer display saker inn
-import Adafruit_Nokia_LCD as LCD
-import Adafruit_GPIO.SPI as SPI
-import Image
-import ImageDraw
-import ImageFont
-
-# Raspberry Pi hardware SPI config:
-DC = 23
-RST = 24
-SPI_PORT = 0
-SPI_DEVICE = 0
-
-# Hardware SPI usage:
-disp = LCD.PCD8544(DC, RST, spi=SPI.SpiDev(SPI_PORT, SPI_DEVICE, max_speed_hz=4000000))
-
-# Initialize library.
-disp.begin(contrast=80)
-# Clear display.
-disp.clear()
-disp.display()
-# Create blank image for drawing.
-# Make sure to create image with mode '1' for 1-bit color.
-image = Image.new('1', (LCD.LCDWIDTH, LCD.LCDHEIGHT))
-# Get drawing object to draw on image.
-draw = ImageDraw.Draw(image)
-# Draw a white filled box to clear the image.
-draw.rectangle((0,0,LCD.LCDWIDTH,LCD.LCDHEIGHT), outline=255, fill=255)
-# Load default font.
-font = ImageFont.load_default()
-# Write some text.
-draw.text((1,1), '1', font=font)
-draw.text((10,1), '1', font=font)
-draw.text((20,1), '1', font=font)
-disp.image(image)
-disp.display()
-
+logging.basicConfig(filename='info_om_sensor.log',level=logging.DEBUG)
 
 
 def createfilename():
@@ -113,7 +51,7 @@ if __name__ == '__main__':
     gpsp = GpsPoller() # create the thread
     try:
         gpsp.start() # start it up
-        bno = BNO055.BNO055(serial_port='/dev/serial0')
+        bno = BNO055.BNO055(serial_port='/dev/serial0', rst=18 )
         print("Wait for accelerometer to start up")
         # Initialize the BNO055 and stop if something went wrong.
         try:
@@ -122,7 +60,7 @@ if __name__ == '__main__':
         except RuntimeError:
             print("Second try to start")
             time.sleep(3)
-            bno = BNO055.BNO055(serial_port='/dev/serial0')
+            bno = BNO055.BNO055(serial_port='/dev/serial0', rst=18)
             time.sleep(1)
             bno.begin()
 
@@ -155,8 +93,8 @@ if __name__ == '__main__':
             #if not bno.begin():
             sys, gyro, accel, mag = bno.get_calibration_status()
             # Print everything out.
-            #print('{0} Heading={1:0.2F} Roll={2:0.2F} Pitch={3:0.2F}\tSys_cal={4} Gyro_cal={5} Accel_cal={6} Mag_cal={7}'.format(
-            #    str(datetime.now()),heading, roll, pitch, sys, gyro, accel, mag))
+            print('{0} Heading={1:0.2F} Roll={2:0.2F} Pitch={3:0.2F}\tSys_cal={4} Gyro_cal={5} Accel_cal={6} Mag_cal={7}'.format(
+                 str(datetime.now()),heading, roll, pitch, sys, gyro, accel, mag))
             # Other values you can optionally read:
             # Orientation as a quaternion:
             #x,y,z,w = bno.read_quaterion()
@@ -177,22 +115,27 @@ if __name__ == '__main__':
             # Sleep for a second until the next reading.
             #print bno.get_calibration()
             observation_number += 1
+            if observation_number % 10 == 0:
+                #print bno.get_calibration()
+                #logging.debug(bno.get_calibration())
+                pass
             write_row(gpsfile, gpsd, observation_number)
-            disp.clear()
-            disp.display()
-            draw.rectangle((0,0,LCD.LCDWIDTH,LCD.LCDHEIGHT), outline=255, fill=255)
-            draw.text((1,1), str(x), font=font)
-            draw.text((1,10), str(y), font=font)
-            draw.text((1,20), str(z), font=font)
-            disp.image(image)
-            disp.display()
+            #disp.clear()
+            #disp.display()
+            #draw.rectangle((0,0,LCD.LCDWIDTH,LCD.LCDHEIGHT), outline=255, fill=255)
+            #draw.text((1,1), str(x), font=font)
+            #draw.text((1,10), str(y), font=font)
+            #draw.text((1,20), str(z), font=font)
+            #disp.image(image)
+            #disp.display()
             time.sleep(0.05)
     except (KeyboardInterrupt, SystemExit): #when you press ctrl+c
         print "\nKilling Thread..."
         gpsp.running = False
         gpsp.join() # wait for the thread to finish what it's doing
         gpsfile.close()
-        draw.rectangle((0,0,LCD.LCDWIDTH,LCD.LCDHEIGHT), outline=255, fill=255)
-        disp.image(image)
-        disp.display()
+        #draw.rectangle((0,0,LCD.LCDWIDTH,LCD.LCDHEIGHT), outline=255, fill=255)
+        #disp.image(image)
+        #disp.display()
     print "Done logging data.\nExiting."
+
