@@ -8,15 +8,20 @@ import time
 import threading
 from Adafruit_BNO055 import BNO055
 
-logging.basicConfig(filename='info_om_sensor.log',level=logging.DEBUG)
+logging.basicConfig(filename='info_om_sensor.log', level=logging.DEBUG)
+log = logging.getLogger("svvlogger")
 
 
 def createfilename():
     base = "/home/pi/telemetri/data/gps_"
     timestr = time.strftime("%Y%m%d-%H%M%S")
     suffix = ".txt"
-    print(base+timestr+suffix)
-    return base+timestr+suffix
+
+    filename = os.path.join(base, timestr, suffix)
+    log.info("Creating {}".format(filename))
+
+    return filename
+
 
 def write_row(file, gpsd, observation_number):
     file.write(str(observation_number) + ';')
@@ -28,6 +33,7 @@ def write_row(file, gpsd, observation_number):
     file.write(str(y) +';')
     file.write(str(z) +';')
     file.write('\n')
+
 
 class GpsPoller(threading.Thread):
     def __init__(self):
