@@ -23,16 +23,18 @@ def createfilename():
     return filename
 
 
-def write_row(file, gpsd, observation_number):
-    file.write(str(observation_number) + ';')
-    file.write(gpsd.utc +';')
-    file.write(str(gpsd.fix.latitude) +';')
-    file.write(str(gpsd.fix.longitude) +';')
-    file.write(str(gpsd.fix.speed) +';')
-    file.write(str(x) +';')
-    file.write(str(y) +';')
-    file.write(str(z) +';')
-    file.write('\n')
+def write_row(file, gpsd, observation_number, acceleration):
+    fmt = "{};{g.utc};{g.fix.lat};{g.fix.lon};{g.fix.speed};{c[x]};{c[y]};{c[z]};\n"
+    file.write(fmt.format(observation_number, g=gpsd, c=acceleration))
+    # file.write(str(observation_number) + ';')
+    # file.write(gpsd.utc +';')
+    # file.write(str(gpsd.fix.latitude) +';')
+    # file.write(str(gpsd.fix.longitude) +';')
+    # file.write(str(gpsd.fix.speed) +';')
+    # file.write(str(x) +';')
+    # file.write(str(y) +';')
+    # file.write(str(z) +';')
+    # file.write('\n')
 
 
 class GpsPoller(threading.Thread):
