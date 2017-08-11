@@ -40,68 +40,69 @@ def write_row(file, gpsd, observation_number, acceleration):
 class GpsPoller(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
-        global gpsd #bring it in scope
-        gpsd = gps(mode=WATCH_ENABLE) #starting the stream of info
+        global gpsd  # bring it in scope
+        gpsd = gps(mode=WATCH_ENABLE)  # starting the stream of info
         self.current_value = None
-        self.running = True #setting the thread running to true
+        self.running = True  # setting the thread running to true
 
     def run(self):
         global gpsd
         while gpsp.running:
-            gpsd.next() #this will continue to loop and grab EACH set of gpsd info to clear the buffer
+            gpsd.next()  # this will continue to loop and grab EACH set of gpsd info to clear the buffer
+
 
 if __name__ == '__main__':
     observation_number = 0
-    gpsfile = open(createfilename(),'w')
+    gpsfile = open(createfilename(), 'w')
     gpsfile.write('id;utc;lat;lon;speed;x;y;z\n')
-    gpsd = None #seting the global variable
-    os.system('clear') #clear the terminal (optional)
-    gpsp = GpsPoller() # create the thread
+    gpsd = None  # seting the global variable
+    os.system('clear')  # clear the terminal (optional)
+    gpsp = GpsPoller()  # create the thread
     try:
-        gpsp.start() # start it up
-        bno = BNO055.BNO055(serial_port='/dev/serial0', rst=18 )
-        print("Wait for accelerometer to start up")
+        gpsp.start()  # start it up
+        bno = BNO055.BNO055(serial_port='/dev/serial0', rst=18)
+        log.info("Wait for accelerometer to start up")
         # Initialize the BNO055 and stop if something went wrong.
         try:
             if not bno.begin():
                 raise RuntimeError('Could not start accelerometer')
         except RuntimeError:
-            print("Second try to start")
+            log.info("Second try to start")
             time.sleep(3)
             bno = BNO055.BNO055(serial_port='/dev/serial0', rst=18)
             time.sleep(1)
             bno.begin()
 
-
-         # Print system status and self test result.
+        # Print system status and self test result.
         status, self_test, error = bno.get_system_status()
-        print('System status: {0}'.format(status))
-        print('Self test result (0x0F is normal): 0x{0:02X}'.format(self_test))
+        log.info('System status: {0}'.format(status))
+        log.info('Self test result (0x0F is normal): 0x{0:02X}'.format(self_test))
         # Print out an error if system status is in error mode.
 
         if status == 0x01:
-            print('System error: {0}'.format(error))
-            print('See datasheet section 4.3.59 for the meaning.')
+            log.info('System error: {0}'.format(error))
+            log.info('See datasheet section 4.3.59 for the meaning.')
 
         # Print BNO055 software revision and other diagnostic data.
         sw, bl, accel, mag, gyro = bno.get_revision()
-        print('Software version:   {0}'.format(sw))
-        print('Bootloader version: {0}'.format(bl))
-        print('Accelerometer ID:   0x{0:02X}'.format(accel))
-        print('Magnetometer ID:    0x{0:02X}'.format(mag))
-        print('Gyroscope ID:       0x{0:02X}\n'.format(gyro))
+        log.info('Software version:   {0}'.format(sw))
+        log.info('Bootloader version: {0}'.format(bl))
+        log.info('Accelerometer ID:   0x{0:02X}'.format(accel))
+        log.info('Magnetometer ID:    0x{0:02X}'.format(mag))
+        log.info('Gyroscope ID:       0x{0:02X}\n'.format(gyro))
 
         print('Reading BNO055 data, press Ctrl-C to quit...')
-        bno.set_calibration([246, 255, 176, 255, 10, 0, 163, 2, 119, 1, 214, 0, 254, 255, 253, 255, 1, 0, 232, 3, 40, 3])
+        bno.set_calibration([246, 255, 176, 255, 10, 0, 163, 2, 119, 1, 214, 0,
+                             254, 255, 253, 255, 1, 0, 232, 3, 40, 3])
 
         while True:
             # Read the Euler angles for heading, roll, pitch (all in degrees).
             heading, roll, pitch = bno.read_euler()
             # Read the calibration status, 0=uncalibrated and 3=fully calibrated.
-            #if not bno.begin():
-            sys, gyro, accel, mag = bno.get_calibration_status()
+            # if not bno.begin():
+            _, gyro, accel, mag = bno.get_calibration_status()
             # Print everything out.
-            print('{0} Heading={1:0.2F} Roll={2:0.2F} Pitch={3:0.2F}\tSys_cal={4} Gyro_cal={5} Accel_cal={6} Mag_cal={7}'.format(
+            log.info('{0} Heading={1:0.2F} Roll={2:0.2F} Pitch={3:0.2F}\tSys_cal={4} Gyro_cal={5} Accel_cal={6} Mag_cal={7}'.format(
                  str(datetime.now()),heading, roll, pitch, sys, gyro, accel, mag))
             # Other values you can optionally read:
             # Orientation as a quaternion:
@@ -116,18 +117,20 @@ if __name__ == '__main__':
             #x,y,z = bno.read_accelerometer()
             # Linear acceleration data (i.e. acceleration from movement, not gravity--
             # returned in meters per second squared):
-            x,y,z = bno.read_linear_acceleration()
+            x, y, z = bno.read_linear_acceleration()
             # Gravity acceleration data (i.e. acceleration just from gravity--returned
             # in meters per second squared):
             #x,y,z = bno.read_gravity()
             # Sleep for a second until the next reading.
             #print bno.get_calibration()
+
             observation_number += 1
             if observation_number % 10 == 0:
-                #print bno.get_calibration()
-                #logging.debug(bno.get_calibration())
+                log.debug(bno.get_calibration())
                 pass
-            write_row(gpsfile, gpsd, observation_number)
+
+            acceleration = dict(x=x, y=y, z=z)
+            write_row(gpsfile, gpsd, observation_number, acceleration)
             #disp.clear()
             #disp.display()
             #draw.rectangle((0,0,LCD.LCDWIDTH,LCD.LCDHEIGHT), outline=255, fill=255)
@@ -137,13 +140,14 @@ if __name__ == '__main__':
             #disp.image(image)
             #disp.display()
             time.sleep(0.05)
-    except (KeyboardInterrupt, SystemExit): #when you press ctrl+c
-        print "\nKilling Thread..."
+    except (KeyboardInterrupt, SystemExit):  # when you press ctrl+c
+        log.info("\nKilling Thread...")
         gpsp.running = False
-        gpsp.join() # wait for the thread to finish what it's doing
+        gpsp.join()  # wait for the thread to finish what it's doing
         gpsfile.close()
+
         #draw.rectangle((0,0,LCD.LCDWIDTH,LCD.LCDHEIGHT), outline=255, fill=255)
         #disp.image(image)
         #disp.display()
-    print "Done logging data.\nExiting."
+    log.info("Done logging data.\nExiting.")
 
