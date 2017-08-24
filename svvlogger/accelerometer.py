@@ -7,7 +7,11 @@ log = logging.getLogger("svvlogger")
 
 
 class Accelerometer:
-    def __init__(self, serial_port, rts=18):
+    """
+    Encapsulation of the BNO055 python package from Adafruit.
+    """
+
+    def __init__(self, serial_port, rts):
         self._serial_port = serial_port
         self._rts = 18
         self._started = False
@@ -35,6 +39,12 @@ class Accelerometer:
             log.error("Unable to initilize BNO055..")
             sys.exit(1)
 
+        status, self_test, err = self.status()
+        if status == 0x01:
+            log.error('System error: {0}'.format(err))
+            log.error('See datasheet section 4.3.59 for the meaning.')
+            sys.exit(1)
+
     def status(self):
         system_status = self._bno.get_system_status()
         return system_status
@@ -53,4 +63,17 @@ class Accelerometer:
             [246, 255, 176, 255, 10, 0, 163, 2, 119, 1, 214, 0,
                 254, 255, 253, 255, 1, 0, 232, 3, 40, 3])
 
+    def calibration_status(self):
+        return self._bno.get_calibration_status()
 
+    @property
+    def euler(self):
+        return self._bno.read_euler()
+
+    @property
+    def linear_acceleration(self):
+        return self._bno.read_linear_acceleration()
+
+    def __repr__(self):
+        return "{}(started={})".format(self.__class__.__name__,
+                                       self._started)
