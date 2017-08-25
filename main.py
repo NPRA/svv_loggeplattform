@@ -51,10 +51,14 @@ class TelemetryLogger:
         self.gps_poller.start()
 
         while True:
-            time.sleep(0.05)
+            time.sleep(0.5)
             gps = self.gps_poller.data()
-            accel = self.accelerometer.linear_acceleration()
-            
+            x, y, z = self.accelerometer.linear_acceleration()
+            accel = {"x": x, "y": y, "z": z}
+            log.debug("Acceleration: {}".format(accel))
+            log.debug("GPS (lat: {}, lon: {}). UTC: {}".format(
+                gps.fix.lat, gps.fix.lon, gps.utc))
+
 
 
 if __name__ == '__main__':
