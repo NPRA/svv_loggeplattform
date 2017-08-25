@@ -66,11 +66,9 @@ class Accelerometer:
     def calibration_status(self):
         return self._bno.get_calibration_status()
 
-    @property
     def euler(self):
         return self._bno.read_euler()
 
-    @property
     def linear_acceleration(self):
         return self._bno.read_linear_acceleration()
 
