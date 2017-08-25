@@ -4,18 +4,12 @@ import logging
 log = logging.getLogger("svvlogger")
 
 try:
-    from gps import *
+    #from gps import *
+    from gps3py import gps
 except ImportError as e:
+    import sys
     log.exception("Error importing gps package")
-    log.warn("Creating a dummy gps class for testing purposes..")
-    class gps:
-        def __init__(*a, **kw):
-            pass
-
-        def next(self):
-            pass
-
-    WATCH_ENABLE = 1
+    sys.exit(1)
 
 
 class GpsPoller(threading.Thread):
@@ -25,7 +19,7 @@ class GpsPoller(threading.Thread):
     """
     def __init__(self):
         threading.Thread.__init__(self)
-        self.gps_data = gps(mode=WATCH_ENABLE)
+        self.gps_data = gps.GPS(mode=gps.WATCH_ENABLE)
         self.running = False
 
     def run(self):
