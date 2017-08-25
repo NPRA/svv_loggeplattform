@@ -1,10 +1,13 @@
 import threading
-import time
+import logging
 
+log = logging.getLogger("svvlogger")
 
 try:
     from gps import *
 except ImportError as e:
+    log.exception("Error importing gps package")
+    log.warn("Creating a dummy gps class for testing purposes..")
     class gps:
         def __init__(*a, **kw):
             pass
