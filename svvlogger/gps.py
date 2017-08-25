@@ -22,12 +22,14 @@ class GpsPoller(threading.Thread):
     """
     def __init__(self):
         threading.Thread.__init__(self)
-        self.gps_daemon = gps(mode=WATCH_ENABLE)
+        self.gps_data = gps(mode=WATCH_ENABLE)
         self.running = False
 
     def run(self):
         self.running = True
 
-        while self.gps_daemon.running:
-            self.gps_daemon.next()
+        while self.running:
+            self.gps_data.next()
 
+    def data(self):
+        return self.gps_data
